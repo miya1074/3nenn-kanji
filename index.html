@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中1 漢字・読みトレーニング</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Yu Gothic","Meiryo",sans-serif;background:#f4f7fb;color:#1f2937}
+header{background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;text-align:center;padding:25px 15px}
+header h1{margin:0 0 8px;font-size:30px} header p{margin:0}
+main{max-width:800px;margin:20px auto;padding:0 15px}
+.card{background:#fff;border-radius:18px;padding:24px;margin-bottom:18px;box-shadow:0 5px 18px rgba(0,0,0,.08)}
+.hidden{display:none!important}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.choice{display:inline-flex;align-items:center;gap:7px;padding:10px 14px;background:#eff6ff;border-radius:10px;font-weight:bold}
+select,input{font:inherit} select{padding:9px;border:1px solid #cbd5e1;border-radius:8px}
+button{border:0;border-radius:10px;padding:12px 18px;font-size:16px;font-weight:bold;cursor:pointer}
+.primary{background:#2563eb;color:white}.secondary{background:#e5e7eb;color:#1f2937}
+.small{font-size:13px;color:#64748b}
+#topline{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+#questionType{background:#dbeafe;color:#1d4ed8;border-radius:999px;padding:6px 12px;font-weight:bold}
+#barOuter{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:12px 0 18px}
+#bar{height:100%;width:0;background:#2563eb;transition:.25s}
+#sentence{font-size:28px;font-weight:bold;line-height:1.8;margin:20px 0}
+.target{background:#fef3c7;border-bottom:3px solid #f59e0b;border-radius:6px;padding:2px 6px}
+#hint{color:#475569;margin-bottom:12px}
+.answerRow{display:flex;gap:10px}.answerRow input{flex:1;min-width:0;padding:13px;font-size:21px;border:2px solid #cbd5e1;border-radius:10px}
+.answerRow input:focus{outline:none;border-color:#2563eb}
+#feedback{margin-top:16px;padding:16px;border-radius:12px;line-height:1.7}
+.ok{background:#ecfdf5;border:1px solid #86efac}.ng{background:#fef2f2;border:1px solid #fca5a5}
+.answer{font-size:22px;font-weight:bold;margin-top:8px}.meaning{margin-top:12px;background:#fffbeb;padding:12px;border-left:4px solid #f59e0b;border-radius:6px}
+.studyItem{padding:14px 0;border-bottom:1px solid #e5e7eb}.word{font-size:21px;font-weight:bold}.reading{color:#64748b;margin-left:8px}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:bold;margin-bottom:5px}
+@media(max-width:600px){#sentence{font-size:23px}.answerRow{flex-direction:column}.answerRow button{width:100%}}
+</style>
+</head>
+<body>
+<header>
+<h1>📘 中1 漢字・読みトレーニング</h1>
+<p>漢字を書く・読みを答える・意味を確認する！</p>
+</header>
+
+<main>
+<section id="startScreen" class="card">
+<h2>練習を始めよう！</h2>
+<p>「漢字を身につけよう2・3」と「漢字のしくみ2」を、すべてまとめて練習できます。</p>
+<div class="row">
+<label>問題数　
+<select id="count">
+<option value="10">10問</option>
+<option value="20">20問</option>
+<option value="50">50問</option>
+<option value="0">全部</option>
+</select>
+</label>
+</div>
+<p><b>出題方法</b></p>
+<div class="row">
+<label class="choice"><input type="checkbox" id="writingMode" checked> ✍️ 漢字を書く</label>
+<label class="choice"><input type="checkbox" id="readingMode" checked> 🔊 読みを答える</label>
+</div>
+<div class="row" style="margin-top:20px">
+<button id="startButton" class="primary">練習スタート！</button>
+<button id="studyButton" class="secondary">📖 全問題を一覧で復習</button>
+</div>
+<p class="small">※ 出題される部分は「　」と黄色で囲んで表示されます。答え合わせでは、正解・不正解にかかわらず意味を必ず確認します。</p>
+</section>
+
+<section id="quizScreen" class="card hidden">
+<div id="topline">
+<span id="progressText"></span>
+<span id="questionType"></span>
+<span>正解：<b id="scoreNow">0</b></span>
+</div>
+<div id="barOuter"><div id="bar"></div></div>
+<div id="sentence"></div>
+<div id="hint"></div>
+<div class="answerRow">
+<input id="answerInput" type="text" autocomplete="off">
+<button id="checkButton" class="primary">答える</button>
+</div>
+<div id="feedback" class="hidden"></div>
+<div id="afterButtons" class="row hidden" style="margin-top:15px">
+<button id="nextButton" class="primary">次の問題へ →</button>
+<button id="retryButton" class="secondary">もう一度入力</button>
+</div>
+<p class="small">Enterキー：答え合わせ → 意味を確認 → 次の問題へ</p>
+</section>
+
+<section id="resultScreen" class="card hidden" style="text-align:center">
+<h2>🎉 おつかれさま！</h2>
+<div id="finalScore" style="font-size:52px;font-weight:bold;color:#2563eb"></div>
+<p id="finalMessage"></p>
+<div class="row" style="justify-content:center">
+<button id="wrongReviewButton" class="primary">📚 間違えた問題を復習</button>
+<button id="wrongButton" class="secondary">🔄 間違えた問題に再挑戦</button>
+<button id="restartButton" class="secondary">最初に戻る</button>
+</div>
+</section>
+
+<section id="wrongReviewScreen" class="card hidden">
+<h2>📚 間違えた問題を復習</h2>
+<p class="small">答えと意味を確認してから、もう一度挑戦しよう。</p>
+<div id="wrongReviewList"></div>
+<div class="row" style="margin-top:16px">
+<button id="wrongReviewRetryButton" class="primary">🔄 この問題に再挑戦</button>
+<button id="closeWrongReviewButton" class="secondary">結果に戻る</button>
+</div>
+</section>
+
+<section id="studyScreen" class="card hidden">
+<h2>📖 漢字・読み・意味一覧</h2>
+<p class="small">テスト前の総復習にも使えます。</p>
+<div id="studyList"></div>
+<button id="closeStudyButton" class="secondary" style="margin-top:16px">戻る</button>
+</section>
+</main>
+
+<script>
+const DATA = [{"answer": "卑下", "reading": "ひげ", "sentence": "自分をヒゲする。", "target": "ヒゲ", "meaning": "自分を実際より低く評価して、へりくだること。", "aliases": []}, {"answer": "煩雑", "reading": "はんざつ", "sentence": "ハンザツな事務手続き。", "target": "ハンザツ", "meaning": "物事がこみ入っていて、わずらわしいこと。", "aliases": []}, {"answer": "訂正", "reading": "ていせい", "sentence": "誤りをテイセイする。", "target": "テイセイ", "meaning": "間違いを正しく直すこと。", "aliases": []}, {"answer": "陳謝", "reading": "ちんしゃ", "sentence": "失礼をチンシャする。", "target": "チンシャ", "meaning": "事情を述べて、ていねいに謝ること。", "aliases": []}, {"answer": "虎", "reading": "とら", "sentence": "とらの子のお金。", "target": "とら", "meaning": "ネコ科の大型の動物。", "aliases": []}, {"answer": "描", "reading": "えが", "sentence": "夢をえがく。", "target": "えが", "meaning": "絵や考えなどを表すこと。", "aliases": []}, {"answer": "柿", "reading": "かき", "sentence": "かきの実を干す。", "target": "かき", "meaning": "秋に実る果物の一つ。", "aliases": []}, {"answer": "鈴", "reading": "すず", "sentence": "さい布のすずが鳴る。", "target": "すず", "meaning": "中に玉が入っていて、振ると音が鳴るもの。", "aliases": []}, {"answer": "蜂", "reading": "はち", "sentence": "はちミツをかけて食べる。", "target": "はち", "meaning": "花の蜜を集める昆虫。", "aliases": []}, {"answer": "蜂", "reading": "はち", "sentence": "はちの巣を取る。", "target": "はち", "meaning": "花の蜜を集める昆虫。", "aliases": []}, {"answer": "花", "reading": "はな", "sentence": "松の木のめばな。", "target": "めばな", "meaning": "植物の雌の花。", "aliases": []}, {"answer": "野菊", "reading": "のぎく", "sentence": "のギクを折り取る。", "target": "のギク", "meaning": "野に自然に生えるキク。", "aliases": []}, {"answer": "日頃", "reading": "ひごろ", "sentence": "ひごろの行いがよい。", "target": "ひごろ", "meaning": "ふだん。いつも。", "aliases": []}, {"answer": "随筆", "reading": "ずいひつ", "sentence": "作家のズイヒツを読む。", "target": "ズイヒツ", "meaning": "見聞や感想などを自由な形式で書いた文章。", "aliases": []}, {"answer": "一掃", "reading": "いっそう", "sentence": "悪をイッソウする。", "target": "イッソウ", "meaning": "残らず取り除くこと。", "aliases": []}, {"answer": "満塁", "reading": "まんるい", "sentence": "マンルイホムラン。", "target": "マンルイ", "meaning": "野球で、すべての塁に走者がいる状態。", "aliases": []}, {"answer": "虹", "reading": "にじ", "sentence": "雨上がりににじが出る。", "target": "にじ", "meaning": "空に弧を描いて見える色の帯。", "aliases": []}, {"answer": "架", "reading": "か", "sentence": "川に橋をかける。", "target": "かける", "meaning": "橋などを渡すこと。", "aliases": []}, {"answer": "仰", "reading": "あお", "sentence": "星空をあおぐ。", "target": "あおぐ", "meaning": "上を向いて見ること。", "aliases": []}, {"answer": "北斗", "reading": "ほくと", "sentence": "ホクト七星を探す。", "target": "ホクト", "meaning": "北の空に見える星の並びに関する名称。", "aliases": []}, {"answer": "支度", "reading": "したく", "sentence": "旅のシタクをする。", "target": "シタク", "meaning": "必要なものをそろえ、準備すること。", "aliases": ["仕度"]}, {"answer": "調", "reading": "ととの", "sentence": "料理の味をととのえる。", "target": "ととのえる", "meaning": "具合がよいように整えること。", "aliases": []}, {"answer": "街道", "reading": "かいどう", "sentence": "旧カイドウを行く。", "target": "カイドウ", "meaning": "町と町を結ぶ、昔からの主要な道。", "aliases": []}, {"answer": "幸", "reading": "さち", "sentence": "きのこなどの山のさち。", "target": "さち", "meaning": "自然から得られる恵み。", "aliases": []}, {"answer": "燃焼", "reading": "ねんしょう", "sentence": "油がネンショウする。", "target": "ネンショウ", "meaning": "燃えること。", "aliases": []}, {"answer": "速", "reading": "すみ", "sentence": "すみやかに行動する。", "target": "すみやか", "meaning": "時間をおかず、すぐに行うさま。", "aliases": []}, {"answer": "万歳", "reading": "ばんざい", "sentence": "バンザイしてゴルする。", "target": "バンザイ", "meaning": "喜びや祝いの気持ちを表して両手を上げること。", "aliases": []}, {"answer": "声色", "reading": "こわいろ", "sentence": "電話でこわいろを使う。", "target": "こわいろ", "meaning": "声の調子や音色。", "aliases": []}, {"answer": "峠道", "reading": "とうげみち", "sentence": "とうげみちを歩く。", "target": "とうげみち", "meaning": "山の峠を通る道。", "aliases": []}, {"answer": "匂", "reading": "にお", "sentence": "よいにおいがする。", "target": "におい", "meaning": "鼻で感じる香り。", "aliases": []}, {"answer": "偉業", "reading": "いぎょう", "sentence": "イギョウを達成する。", "target": "イギョウ", "meaning": "すぐれた大きな仕事や功績。", "aliases": []}, {"answer": "破綻", "reading": "はたん", "sentence": "経営がハタンする。", "target": "ハタン", "meaning": "物事がうまく続かなくなり、成り立たなくなること。", "aliases": []}, {"answer": "焦点", "reading": "しょうてん", "sentence": "レンズのショウテン。", "target": "ショウテン", "meaning": "レンズなどで光が一点に集まるところ。", "aliases": []}, {"answer": "盆", "reading": "ぼん", "sentence": "おボンにカップを置く。", "target": "ボン", "meaning": "物を載せて運ぶための平らな器。", "aliases": []}, {"answer": "疫病", "reading": "えきびょう", "sentence": "町にエキビョウがはやる。", "target": "エキビョウ", "meaning": "多くの人に広がる伝染病。", "aliases": []}, {"answer": "送迎", "reading": "そうげい", "sentence": "ソウゲイのバスに乗る。", "target": "ソウゲイ", "meaning": "人を送り迎えすること。", "aliases": []}, {"answer": "遂行", "reading": "すいこう", "sentence": "任務をスイコウする。", "target": "スイコウ", "meaning": "仕事や任務を最後までやりとげること。", "aliases": []}, {"answer": "超過", "reading": "ちょうか", "sentence": "料金がチョウカする。", "target": "チョウカ", "meaning": "決められた量や範囲を超えること。", "aliases": []}, {"answer": "慕情", "reading": "ぼじょう", "sentence": "故国へのボジョウ。", "target": "ボジョウ", "meaning": "恋しく慕う気持ち。", "aliases": []}, {"answer": "水泡", "reading": "すいほう", "sentence": "努力がスイホウに帰す。", "target": "スイホウ", "meaning": "水の泡のように、努力などがむだになること。", "aliases": []}, {"answer": "濁音", "reading": "だくおん", "sentence": "ダクオンのある言葉。", "target": "ダクオン", "meaning": "「が」「ざ」などのように濁点を伴う音。", "aliases": []}, {"answer": "漆黒", "reading": "しっこく", "sentence": "シッコクのベル。", "target": "シッコク", "meaning": "うるしのように非常に黒いこと。", "aliases": []}, {"answer": "安泰", "reading": "あんたい", "sentence": "政権はアンタイだ。", "target": "アンタイ", "meaning": "穏やかで安全な状態。", "aliases": []}, {"answer": "肝心", "reading": "かんじん", "sentence": "カンジンなことを言い忘れる。", "target": "カンジン", "meaning": "特に大切で重要なこと。", "aliases": []}, {"answer": "腎臓", "reading": "じんぞう", "sentence": "ジンゾウは二つある。", "target": "ジンゾウ", "meaning": "血液から不要な物をこし取り、尿を作る器官。", "aliases": []}, {"answer": "大胆", "reading": "だいたん", "sentence": "ダイタンな行動を取る。", "target": "ダイタン", "meaning": "度胸があり、思い切っていること。", "aliases": []}, {"answer": "両脇", "reading": "りょうわき", "sentence": "祖父をリョウわきから支える。", "target": "リョウわき", "meaning": "左右のわき。", "aliases": []}, {"answer": "昆虫", "reading": "こんちゅう", "sentence": "コンチュウを観察する。", "target": "コンチュウ", "meaning": "体が頭・胸・腹に分かれ、足が六本ある動物。", "aliases": []}, {"answer": "紳士的", "reading": "しんしてき", "sentence": "シンシテキにふるまう。", "target": "シンシテキ", "meaning": "礼儀正しく、品のあるさま。", "aliases": []}, {"answer": "雰囲気", "reading": "ふんいき", "sentence": "楽しいフンイキだ。", "target": "フンイキ", "meaning": "その場や人がつくり出す感じやようす。", "aliases": []}, {"answer": "襟巻", "reading": "えりまき", "sentence": "毛糸でえりまきを編む。", "target": "えりまき", "meaning": "首に巻いて寒さを防ぐもの。", "aliases": []}, {"answer": "朗詠", "reading": "ろうえい", "sentence": "漢詩をロウエイする。", "target": "ロウエイ", "meaning": "詩歌などを声高らかに節をつけて読むこと。", "aliases": []}, {"answer": "特徴", "reading": "とくちょう", "sentence": "動物の体のトクチョウ。", "target": "トクチョウ", "meaning": "他と比べて特に目立つ性質。", "aliases": []}, {"answer": "亀裂", "reading": "きれつ", "sentence": "地面にキれつが入る。", "target": "キれつ", "meaning": "割れ目。関係が悪くなることにもいう。", "aliases": []}, {"answer": "比喩", "reading": "ひゆ", "sentence": "ヒユを使って表現する。", "target": "ヒユ", "meaning": "ある物事を、似た別の物事にたとえて表すこと。", "aliases": []}, {"answer": "叙情", "reading": "じょじょう", "sentence": "ジョジョウ的な曲調。", "target": "ジョジョウ", "meaning": "感情や心の動きを表すこと。", "aliases": []}, {"answer": "根拠", "reading": "こんきょ", "sentence": "推理のコンキョとなる。", "target": "コンキョ", "meaning": "判断や考えのもとになる理由や事実。", "aliases": []}, {"answer": "乏", "reading": "とぼ", "sentence": "資源がとぼしい。", "target": "とぼしい", "meaning": "少なくて足りない。", "aliases": []}, {"answer": "豪雨", "reading": "ごうう", "sentence": "ゴウウで川があふれる。", "target": "ゴウウ", "meaning": "非常に激しく降る雨。", "aliases": []}, {"answer": "喚起", "reading": "かんき", "sentence": "注意をカンキする。", "target": "カンキ", "meaning": "注意や関心などを呼び起こすこと。", "aliases": []}, {"answer": "虚栄", "reading": "きょえい", "sentence": "キョエイを張る。", "target": "キョエイ", "meaning": "実質以上によく見せようとすること。", "aliases": []}, {"answer": "偽証罪", "reading": "ぎしょうざい", "sentence": "ギショウザイに問われる。", "target": "ギショウザイ", "meaning": "法廷などで、うその証言をしたことに関する罪。", "aliases": []}, {"answer": "主催", "reading": "しゅさい", "sentence": "生徒会がシュサイする。", "target": "シュサイ", "meaning": "会や行事などを中心になって開くこと。", "aliases": []}, {"answer": "促進", "reading": "そくしん", "sentence": "事業をソクシンする。", "target": "ソクシン", "meaning": "物事が進むように働きかけること。", "aliases": []}, {"answer": "封筒", "reading": "ふうとう", "sentence": "フウトウに手紙を入れる。", "target": "フウトウ", "meaning": "手紙などを入れて送るための袋。", "aliases": []}, {"answer": "宛名", "reading": "あてな", "sentence": "手紙のあてなを書く。", "target": "あてな", "meaning": "手紙などを送る相手の名前や住所。", "aliases": []}, {"answer": "貼", "reading": "は", "sentence": "ノートにシールをはる。", "target": "はる", "meaning": "のりなどで、紙などをくっつけること。", "aliases": []}, {"answer": "互", "reading": "たが", "sentence": "たがいに助け合う。", "target": "たがい", "meaning": "相手どうし。", "aliases": []}, {"answer": "苦闘", "reading": "くとう", "sentence": "悪戦クトウする。", "target": "クトウ", "meaning": "苦しみながら、懸命に戦ったり努力したりすること。", "aliases": []}, {"answer": "柔道", "reading": "じゅうどう", "sentence": "ジュウドウの練習をする。", "target": "ジュウドウ", "meaning": "相手を投げたり押さえたりして勝敗を競う武道。", "aliases": []}, {"answer": "征服", "reading": "せいふく", "sentence": "世界セイフクの野望。", "target": "セイフク", "meaning": "力で相手を打ち負かし、自分の支配下に置くこと。", "aliases": []}, {"answer": "親睦", "reading": "しんぼく", "sentence": "クラスのシンボク会。", "target": "シンボク", "meaning": "親しくつきあい、仲よくなること。", "aliases": []}, {"answer": "硬質", "reading": "こうしつ", "sentence": "コウシツガラスの窓。", "target": "コウシツ", "meaning": "硬い性質をもつこと。", "aliases": []}, {"answer": "謎", "reading": "なぞ", "sentence": "事件のなぞを解く。", "target": "なぞ", "meaning": "理由や正体が分からず、不思議なこと。", "aliases": []}, {"answer": "勝", "reading": "まさ", "sentence": "相手より力がまさる。", "target": "まさる", "meaning": "他よりすぐれている。", "aliases": []}, {"answer": "納得", "reading": "なっとく", "sentence": "説明にナットクする。", "target": "ナットク", "meaning": "事情を理解して、もっともだと思うこと。", "aliases": []}, {"answer": "欲", "reading": "ほ", "sentence": "何でもほしがる。", "target": "ほしがる", "meaning": "欲しいと思う。", "aliases": []}, {"answer": "夏至", "reading": "げし", "sentence": "ゲシの日の太陽。", "target": "ゲシ", "meaning": "一年で昼の時間が最も長くなるころ。", "aliases": []}, {"answer": "申告", "reading": "しんこく", "sentence": "所得をシンコクする。", "target": "シンコク", "meaning": "必要なことを役所などに申し出ること。", "aliases": []}, {"answer": "対句", "reading": "ついく", "sentence": "ツイクが効果的な詩。", "target": "ツイク", "meaning": "二つの句を、形や意味の対応を考えて並べる表現。", "aliases": []}, {"answer": "破片", "reading": "はへん", "sentence": "ガラスのハヘン。", "target": "ハヘン", "meaning": "割れたり壊れたりした物のかけら。", "aliases": []}, {"answer": "素直", "reading": "すなお", "sentence": "スなおに従う。", "target": "すなお", "meaning": "ありのままで、ひねくれていないさま。", "aliases": []}];
+const $ = id => document.getElementById(id);
+const state = {questions:[], index:0, correct:0, wrong:[], checked:false};
+
+function shuffle(a){
+  const x=a.slice();
+  for(let i=x.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [x[i],x[j]]=[x[j],x[i]];
+  }
+  return x;
+}
+function norm(s){return String(s).replace(/[\s　]/g,"").normalize("NFKC").toLowerCase();}
+function hira(s){return String(s).replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));}
+
+function buildQuestions(){
+  const types=[];
+  if($("writingMode").checked) types.push("writing");
+  if($("readingMode").checked) types.push("reading");
+  if(!types.length){alert("「漢字を書く」か「読みを答える」を選んでください。");return null;}
+  const list=[];
+  DATA.forEach(q=>types.forEach(type=>list.push({...q,type})));
+  return list;
+}
+
+function makeMarked(q){
+  const pos=q.sentence.indexOf(q.target);
+  const displayTarget = (q.type==="writing" ? q.target : q.answer);
+
+  // 送り仮名がある問題は、出題箇所に（　）で明示する。
+  // 例：「たがいに助け合う。」→「互（い）に助け合う。」
+  const okuriganaMap = {
+    "互": "（い）"
+  };
+  const markedTarget = okuriganaMap[displayTarget]
+    ? displayTarget + okuriganaMap[displayTarget]
+    : displayTarget;
+
+  if(pos<0) return {before:q.sentence+"　", target:markedTarget, after:""};
+  return {
+    before:q.sentence.slice(0,pos),
+    target:markedTarget,
+    after:q.sentence.slice(pos+q.target.length)
+  };
+}
+
+function startQuiz(custom){
+  const base=custom||buildQuestions();
+  if(!base) return;
+  state.questions=shuffle(base);
+  const n=Number($("count").value);
+  if(n>0) state.questions=state.questions.slice(0,Math.min(n,state.questions.length));
+  state.index=0; state.correct=0; state.wrong=[]; state.checked=false;
+  $("startScreen").classList.add("hidden");
+  $("resultScreen").classList.add("hidden");
+  $("wrongReviewScreen").classList.add("hidden");
+  $("studyScreen").classList.add("hidden");
+  $("quizScreen").classList.remove("hidden");
+  render();
+}
+
+function render(){
+  const q=state.questions[state.index];
+  state.checked=false;
+  $("progressText").textContent=(state.index+1)+" / "+state.questions.length;
+  $("scoreNow").textContent=state.correct;
+  $("bar").style.width=(state.index/state.questions.length*100)+"%";
+  $("questionType").textContent=q.type==="writing"?"✍️ 漢字を書く":"🔊 読みを答える";
+
+  const m=makeMarked(q), box=$("sentence");
+  box.innerHTML="";
+  box.append(document.createTextNode(m.before));
+  const span=document.createElement("span");
+  span.className="target";
+  span.textContent="「"+m.target+"」";
+  box.append(span);
+  box.append(document.createTextNode(m.after));
+
+  $("hint").textContent=q.type==="writing"
+    ?"「　」で囲まれた部分を漢字で答えよう。"
+    :"「　」で囲まれた漢字の読みを、ひらがなで答えよう。";
+  $("answerInput").placeholder=q.type==="writing"?"漢字で入力":"読みをひらがなで入力";
+  $("answerInput").value="";
+  $("answerInput").disabled=false;
+  $("checkButton").disabled=false;
+  $("feedback").className="hidden";
+  $("feedback").innerHTML="";
+  $("afterButtons").classList.add("hidden");
+  $("answerInput").focus();
+}
+
+function check(){
+  if(state.checked) return;
+  const q=state.questions[state.index];
+  const v=norm($("answerInput").value);
+  if(!v){$("answerInput").focus();return;}
+
+  state.checked=true;
+  let ok=false;
+  if(q.type==="writing"){
+    const accepted=[q.answer,...(q.aliases||[])].map(norm);
+    ok=accepted.includes(v);
+  }else{
+    ok=hira(v)===hira(norm(q.reading));
+  }
+
+  if(ok) state.correct++;
+  else state.wrong.push(q);
+
+  $("scoreNow").textContent=state.correct;
+  $("answerInput").disabled=true;
+  $("checkButton").disabled=true;
+
+  const f=$("feedback");
+  f.className=ok?"ok":"ng";
+  const ans=q.type==="writing"
+    ?q.answer+"（"+q.reading+"）"
+    :q.reading+"（"+q.answer+"）";
+  f.innerHTML=(ok?"⭕ <b>正解！</b>":"❌ <b>不正解。</b>")+
+    "<div class='answer'>正解："+ans+"</div>"+
+    "<div class='meaning'><b>意味：</b>"+q.meaning+"</div>";
+
+  $("afterButtons").classList.remove("hidden");
+  $("bar").style.width=((state.index+1)/state.questions.length*100)+"%";
+}
+
+function next(){
+  state.index++;
+  if(state.index<state.questions.length) render();
+  else finish();
+}
+function retry(){
+  state.checked=false;
+  $("answerInput").disabled=false;
+  $("checkButton").disabled=false;
+  $("answerInput").value="";
+  $("feedback").className="hidden";
+  $("feedback").innerHTML="";
+  $("afterButtons").classList.add("hidden");
+  $("answerInput").focus();
+}
+function finish(){
+  $("quizScreen").classList.add("hidden");
+  $("resultScreen").classList.remove("hidden");
+  $("finalScore").textContent=state.correct+" / "+state.questions.length;
+  const r=Math.round(state.correct/state.questions.length*100);
+  $("finalMessage").textContent=r===100?"全問正解！ 漢字も読みも完璧です！🏆":r>=80?"かなり仕上がっています！ 間違えた問題をもう一度！":"間違えた問題を復習して、次は自己ベストを目指そう！";
+  const show=state.wrong.length?"inline-block":"none";
+  $("wrongButton").style.display=show;
+  $("wrongReviewButton").style.display=show;
+}
+function showStudy(){
+  $("startScreen").classList.add("hidden");
+  $("studyScreen").classList.remove("hidden");
+  const list=$("studyList"); list.innerHTML="";
+  DATA.forEach((q,i)=>{
+    const d=document.createElement("div");
+    d.className="studyItem";
+    d.innerHTML="<div class='small'>"+(i+1)+"</div>"+
+      "<div><span class='word'>"+q.answer+"</span><span class='reading'>（"+q.reading+"）</span></div>"+
+      "<div>"+q.sentence+"</div>"+
+      "<div class='meaning'><b>意味：</b>"+q.meaning+"</div>";
+    list.append(d);
+  });
+}
+function showWrongReview(){
+  $("resultScreen").classList.add("hidden");
+  $("wrongReviewScreen").classList.remove("hidden");
+  const list=$("wrongReviewList"); list.innerHTML="";
+  state.wrong.forEach((q,i)=>{
+    const d=document.createElement("div");
+    d.className="studyItem";
+    const label=q.type==="writing"?"漢字を書く問題":"読みを答える問題";
+    d.innerHTML="<div class='badge'>"+(i+1)+"．"+label+"</div>"+
+      "<div><span class='word'>"+q.answer+"</span><span class='reading'>（"+q.reading+"）</span></div>"+
+      "<div>"+q.sentence+"</div>"+
+      "<div class='meaning'><b>意味：</b>"+q.meaning+"</div>";
+    list.append(d);
+  });
+}
+
+$("startButton").addEventListener("click",()=>startQuiz(null));
+$("checkButton").addEventListener("click",check);
+$("nextButton").addEventListener("click",next);
+$("retryButton").addEventListener("click",retry);
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Enter") return;
+  if($("quizScreen").classList.contains("hidden")) return;
+  if(e.target===$("answerInput")||state.checked){
+    e.preventDefault();
+    state.checked?next():check();
+  }
+});
+$("wrongButton").addEventListener("click",()=>startQuiz(state.wrong));
+$("wrongReviewButton").addEventListener("click",showWrongReview);
+$("wrongReviewRetryButton").addEventListener("click",()=>startQuiz(state.wrong));
+$("closeWrongReviewButton").addEventListener("click",()=>{
+  $("wrongReviewScreen").classList.add("hidden");
+  $("resultScreen").classList.remove("hidden");
+});
+$("restartButton").addEventListener("click",()=>{
+  $("resultScreen").classList.add("hidden");
+  $("startScreen").classList.remove("hidden");
+});
+$("studyButton").addEventListener("click",showStudy);
+$("closeStudyButton").addEventListener("click",()=>{
+  $("studyScreen").classList.add("hidden");
+  $("startScreen").classList.remove("hidden");
+});
+</script>
+</body>
+</html>
